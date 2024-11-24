@@ -152,23 +152,26 @@ Public Class JSONCreator
 
         Select Case Prefixes.Count
             Case 1
-                ErzeugeEinträge(MainModule.Root)
+                ErzeugeEintraege(MainModule.Root, Prefixes)
             Case 2
                 'ErzeugeEinträge(MainModule.Root, strPrefixes(0))
 
-                ErzeugeEinträge(MainModule.Root(Prefixes(0) - 1).UnterKapitel)
+                ErzeugeEintraege(MainModule.Root(Prefixes(0) - 1).UnterKapitel, Prefixes)
             Case 3
-                ErzeugeEinträge(MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel)
+                ErzeugeEintraege(MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel, Prefixes)
         End Select
 
         MainModule.HelpDisplay.AktuelleDetails = Nothing
 
     End Sub
 
-    Private Sub ErzeugeEinträge(ByRef Ebene As ObservableCollection(Of Model.KapitelModel))
+    Private Sub ErzeugeEintraege(ByRef Ebene As ObservableCollection(Of Model.KapitelModel), argPrefixes As List(Of Integer))
         Dim EintragErsetzt As Boolean = False
         If Ebene.Count = 0 Then
-            Ebene.Add(New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
+            AddeEintrag(Ebene, argPrefixes)
+            ''Dim PrefixEinzeln As Integer
+            ''PrefixEinzeln = argPrefix.Count - 1
+
         Else
             For i = 0 To Ebene.Count - 1
                 If Ebene(i).Prefix = Prefix Then
@@ -182,10 +185,28 @@ Public Class JSONCreator
                     End If
                 End If
             Next
-            If Not EintragErsetzt Then Ebene.Add(New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
+            If Not EintragErsetzt Then AddeEintrag(Ebene, argPrefixes) 'Ebene.Add(New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
         End If
 
         Ebene = New ObservableCollection(Of Model.KapitelModel)(Ebene.OrderBy(Function(x) x.Prefix))
+    End Sub
+
+    Private Sub AddeEintrag(ByRef Ebene As ObservableCollection(Of Model.KapitelModel), argPrefixes As List(Of Integer))
+        Select Case argPrefixes.Count
+            Case 1
+                For i = 1 To argPrefixes(0) - 1
+                    MainModule.Root.Add(New Model.KapitelModel(CStr(i), "<nicht festgelegt>", "", "", ""))
+                Next
+            Case 2
+                For i = 1 To argPrefixes(1) - 1
+                    MainModule.Root(argPrefixes(0) - 1).UnterKapitel.Add(New Model.KapitelModel(CStr(i), "<nicht festgelegt>", "", "", ""))
+                Next
+            Case 3
+                For i = 1 To argPrefixes(2) - 1
+                    MainModule.Root(argPrefixes(0)).UnterKapitel(argPrefixes(1)).UnterKapitel.Add(New Model.KapitelModel(CStr(i), "<nicht festgelegt>", "", "", ""))
+                Next
+        End Select
+        Ebene.Add(New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
     End Sub
 
     Private Sub WerteSetzen(ByRef argObjekt As Model.KapitelModel)
