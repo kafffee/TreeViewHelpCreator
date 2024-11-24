@@ -1,0 +1,23 @@
+﻿<Window x:Class="MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:View="clr-namespace:FileAndFolderBrowser.View;assembly=FileAndFolderBrowser.View"
+        xmlns:viewmodel="clr-namespace:FileAndFolderBrowser.ViewModel;assembly=FileAndFolderBrowser.ViewModel"
+        mc:Ignorable="d"
+        Title="TreeViewHelpCreator" Height="450" Width="800" WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" ResizeMode="CanResizeWithGrip" WindowState="Maximized" Closing="Window_Closing">
+    <Window.DataContext>
+        <viewmodel:MainViewModel/>
+    </Window.DataContext>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <View:JSONCreatorView Grid.Row="0" DataContext="{Binding JSONCreator}"/>
+            <View:HelpDisplayView Grid.Row="1" DataContext="{Binding HelpDisplay}"/>
+        </Grid>
+    </ScrollViewer>
+</Window>
