@@ -6,6 +6,7 @@ Public Class MainViewModel
 
     Private MainModule As Services.IZentraleKlasse = Services.ServiceContainer.GetService(Of Services.IZentraleKlasse)
     Public Sub New()
+
         MainModule.JSONCreator = JSONCreator
         MainModule.HelpDisplay = HelpDisplay
     End Sub

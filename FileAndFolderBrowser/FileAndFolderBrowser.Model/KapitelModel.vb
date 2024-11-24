@@ -38,7 +38,34 @@ Public Class KapitelModel
             RaisePropertyChanged()
         End Set
     End Property
-    Public Property UnterKapitel As KapitelModel() = {}
+
+    Private _UnterKapitel As New ObservableCollection(Of Model.KapitelModel)
+    Public Property UnterKapitel As ObservableCollection(Of KapitelModel)
+        Get
+            Return _UnterKapitel
+        End Get
+        Set(value As ObservableCollection(Of KapitelModel))
+            _UnterKapitel = value
+            RaisePropertyChanged()
+        End Set
+    End Property
+
+    Public ReadOnly Property Prefixes As List(Of Integer)
+        Get
+            Dim strPrefixes() As String
+            Dim Separator() As String = {"."}
+
+            strPrefixes = Prefix.Split(Separator, StringSplitOptions.None)
+
+            Dim retPrefixes As New List(Of Integer)
+
+            For Each Eintrag In strPrefixes
+                retPrefixes.Add(CInt(Eintrag))
+            Next
+
+            Return retPrefixes
+        End Get
+    End Property
 
     Public Sub New(argPrefix As String, argUeberschrift As String, argInhalt As String, argBildPfad As String, argIcon As String)
         Prefix = argPrefix

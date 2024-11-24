@@ -88,4 +88,36 @@ Public Class HelpDisplayVM
         MainModule.JSONCreator.BildPfad = Objekt.BildPfad
     End Sub
 
+    Private _Loeschen As ICommand
+    Public ReadOnly Property Loeschen() As ICommand
+        Get
+            If _Loeschen Is Nothing Then _Loeschen = New RelayCommand(AddressOf Loeschen_Execute, Function(o) True)
+            Return _Loeschen
+        End Get
+    End Property
+    Private Sub Loeschen_Execute(obj As Object)
+        Dim Objekt As Model.KapitelModel = DirectCast(obj, Model.KapitelModel)
+
+        Dim Prefix As String = Objekt.Prefix
+
+        Dim strPrefixes() As String
+        Dim Separator() As String = {"."}
+
+        strPrefixes = Prefix.Split(Separator, StringSplitOptions.None)
+
+        Dim Prefixes As New List(Of Integer)
+
+        For Each Eintrag In strPrefixes
+            Prefixes.Add(CInt(Eintrag))
+        Next
+
+        Select Case Prefixes.Count
+            Case 1
+                MainModule.Root(Prefixes(1) - 1) = Nothing
+            Case 2
+                MainModule.Root(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1) = Nothing
+            Case 3
+                MainModule.Root(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1).UnterKapitel(Prefixes(3) - 1) = Nothing
+        End Select
+    End Sub
 End Class

@@ -38,8 +38,9 @@
                                 </TextBlock.InputBindings>
                             </TextBlock>
                             <Button Content="edit" Margin="7, 0, 0, 0" Command="{Binding DataContext.Bearbeiten, ElementName=trv}" CommandParameter="{Binding}"/>
-                         
-                        </StackPanel>
+                        <Button Content="delete" Margin="7, 0, 0, 0" Command="{Binding DataContext.Loeschen, ElementName=trv}" CommandParameter="{Binding}"/>
+
+                    </StackPanel>
                         
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
