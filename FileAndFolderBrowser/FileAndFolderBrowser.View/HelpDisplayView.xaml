@@ -7,57 +7,73 @@
              xmlns:viewmodel="clr-namespace:FileAndFolderBrowser.ViewModel;assembly=FileAndFolderBrowser.ViewModel"
              xmlns:Converter="clr-namespace:FileAndFolderBrowser.ViewModel.Converter;assembly=FileAndFolderBrowser.ViewModel"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" Background="Black">
+             d:DesignHeight="450" d:DesignWidth="1200" Background="Black">
     <UserControl.DataContext>
         <viewmodel:HelpDisplayVM/>
     </UserControl.DataContext>
     <UserControl.Resources>
         <Converter:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <Converter:PathToColumnSpanConverter x:Key="PathToColumnSpanConverter"/>
+        <Converter:CreatorModeToVisibilityConverter x:Key="CreatorModeToVisibilityConverter"/>
     </UserControl.Resources>
     <Grid Margin="15">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="30"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="100"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TreeView Grid.Column="0" Name="trv" Background="Transparent" Foreground="{DynamicResource VordergrundfarbeBrush}" ItemsSource="{Binding MainModule.Root, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+        <TreeView Grid.Column="0" Name="trv" Background="Black" BorderBrush="{DynamicResource VordergrundfarbeBrush}" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderThickness="1" Foreground="{DynamicResource VordergrundfarbeBrush}" ItemsSource="{Binding MainModule.Root, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding UnterKapitel}">
-                    
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Foreground="{DynamicResource VordergrundfarbeBrush}">
+
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{Binding Icon, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Fill="{DynamicResource VordergrundfarbeBrush}" Margin="0, 0, 4, 0" Width="15" Height="15" Stretch="Uniform" Visibility="{Binding Icon, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource StringToVisibilityConverter}}"/>
+                        <TextBlock Foreground="{DynamicResource VordergrundfarbeBrush}" VerticalAlignment="Center">
                                 <Run Text="{Binding Prefix}"/>
                                 <Run Text=" "/>
                                 <Run Text="{Binding Ueberschrift, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                <TextBlock.InputBindings>
-                                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OeffneDetails, ElementName=trv}" CommandParameter="{Binding}"/>
-                                </TextBlock.InputBindings>
-                            </TextBlock>
-                            <Button Content="edit" Margin="7, 0, 0, 0" Command="{Binding DataContext.Bearbeiten, ElementName=trv}" CommandParameter="{Binding}"/>
-                        <Button Content="delete" Margin="7, 0, 0, 0" Command="{Binding DataContext.Loeschen, ElementName=trv}" CommandParameter="{Binding}"/>
+                            <TextBlock.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OeffneDetails, ElementName=trv}" CommandParameter="{Binding}"/>
+                            </TextBlock.InputBindings>
+                        </TextBlock>
+                        <Button Content="edit" Margin="7, 0, 0, 0" Command="{Binding DataContext.Bearbeiten, ElementName=trv}" CommandParameter="{Binding}" Visibility="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type UserControl}}, Path=DataContext.IsIncreatorMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CreatorModeToVisibilityConverter}}"/>
+                        <Button Content="delete" Margin="7, 0, 0, 0" Command="{Binding DataContext.Loeschen, ElementName=trv}" CommandParameter="{Binding}" Visibility="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type UserControl}}, Path=DataContext.IsIncreatorMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CreatorModeToVisibilityConverter}}"/>
 
                     </StackPanel>
-                        
+
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
         </TreeView>
-        <Image Grid.Column="1" Margin="30" Source="{Binding AktuelleDetails.BildPfad, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding AktuelleDetails.BildPfad, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource StringToVisibilityConverter}}" Width="500">
+        <GridSplitter Grid.Column="1" Width="3" Foreground="{DynamicResource VordergrundfarbeBrush}" Background="{DynamicResource VordergrundfarbeBrush}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+        <Border Grid.Column="3"  BorderBrush="{DynamicResource VordergrundfarbeBrush}" BorderThickness="0">
+            <Image Source="{Binding AktuelleDetails.BildPfad, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Margin="15, 0, 0, 0" Width="Auto">
             <Image.ToolTip>
                 <Image Source="{Binding AktuelleDetails.BildPfad, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="1000" Height="1000"/>
             </Image.ToolTip>
         </Image>
-        <TextBlock Grid.Column="2" Margin="30" Text="{Binding AktuelleDetails.Inhalt, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource VordergrundfarbeBrush}"/>
-        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
+        </Border>
+        <Border Grid.Column="2" BorderBrush="{DynamicResource VordergrundfarbeBrush}" BorderThickness="1" Grid.ColumnSpan="{Binding AktuelleDetails.BildPfad, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource PathToColumnSpanConverter}, FallbackValue=2}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Orientation="Vertical">
+                    <TextBlock Text="{Binding AktuelleDetails.Ueberschrift, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource VordergrundfarbeBrush}" FontSize="15" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding AktuelleDetails.Inhalt, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource VordergrundfarbeBrush}" TextAlignment="Justify" TextWrapping="Wrap"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Button Content="Laden..." Command="{Binding Laden}" Grid.Column="0" Margin="0, 15, 7.5, 15" MinHeight="40"/>
-            <Button Content="Speichern..." Command="{Binding Speichern}" Grid.Column="1" Margin="7.5, 15, 0, 15" MinHeight="40"/>
+            <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Right">
+                <Button Content="Laden..." Command="{Binding Laden}" Margin="15" Width="150" VerticalAlignment="Center" Visibility="{Binding IsIncreatorMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CreatorModeToVisibilityConverter}}"/>
+                <Button Content="Speichern..." Command="{Binding Speichern}" Margin="15, 15, 0, 15" Width="150" VerticalAlignment="Center" Visibility="{Binding IsIncreatorMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CreatorModeToVisibilityConverter}}"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

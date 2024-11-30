@@ -70,6 +70,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CreatorModeToVisibilityConverter.vb" />
     <Compile Include="HelpDisplayVM.vb" />
     <Compile Include="JSONCreator.vb" />
     <Compile Include="MainViewModel.vb" />
@@ -89,6 +90,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Infrastructure\RelayCommand.vb" />
+    <Compile Include="PathToColumnSpanConverter.vb" />
     <Compile Include="Services\IWindowService.vb" />
     <Compile Include="Services\IZentraleKlasse.vb" />
     <Compile Include="Services\ServiceContainer.vb" />

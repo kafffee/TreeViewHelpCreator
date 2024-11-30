@@ -6,6 +6,9 @@ Imports System.Windows.Input
 Imports Newtonsoft.Json
 Imports Microsoft.Win32
 Imports System.Runtime.CompilerServices
+Imports System.Runtime.InteropServices
+Imports Microsoft.VisualBasic
+Imports FileAndFolderBrowser.Model
 
 Public Class JSONCreator
     Inherits Instrastructure.ViewModelBase
@@ -35,8 +38,25 @@ Public Class JSONCreator
             Return _Prefix
         End Get
         Set(value As String)
-            _Prefix = value
-            RaisePropertyChanged()
+
+            Dim strPrefixes() As String
+            Dim Separator() As String = {"."}
+            strPrefixes = value.Split(Separator, StringSplitOptions.RemoveEmptyEntries)
+
+            For Each Eintrag In strPrefixes
+                If Eintrag.Contains(" ") Then Eintrag.Replace(" ", "")
+                If Eintrag = "0" Then
+                    MessageBox.Show("Du versuchst, einen ungültigen Wert für das Prefix einzugeben. Es sind nur Zahlen und Punkte erlaubt und maximal drei Punkte, also vier Hierarchieebenen, also z.B. 1, 2.3 oder 3.4.1 usw.. Ausserdem sind keine alleinstehenden Nullen erlaubt, also z.B. 1.0, 0.1 usw.. So etwas ist aber möglich: 10.1")
+                    Return
+                End If
+            Next
+
+            If (IsNumeric(value) And strPrefixes.Length <= 4) OrElse (String.IsNullOrEmpty(value)) Then
+                _Prefix = value
+                RaisePropertyChanged()
+            Else
+                MessageBox.Show("Du versuchst, einen ungültigen Wert für das Prefix einzugeben. Es sind nur Zahlen und Punkte erlaubt und maximal drei Punkte, also vier Hierarchieebenen, also z.B. 1, 2.3 oder 3.4.1 usw.. Ausserdem sind keine alleinstehenden Nullen erlaubt, also z.B. 1.0, 0.1 usw.. So etwas ist aber möglich: 10.1")
+            End If
         End Set
     End Property
 
@@ -73,140 +93,140 @@ Public Class JSONCreator
         End Set
     End Property
 
-    'Public Function CreatePrefixList(argPrefixes As String, argPrefix As List(Of Integer), ByRef argstrPrefixes As List) As List(Of Integer)
-
-    '    Dim strPrefixes() As String
-    '    Dim Separator() As String = {"."}
-
-    '    strPrefixes = argPrefixes.Split(Separator, StringSplitOptions.None)
-
-    '    Dim Prefixes As New List(Of Integer)
-
-    '    For Each Eintrag In strPrefixes
-    '        Prefixes.Add(CInt(Eintrag))
-    '    Next
-
-    '    Return Prefixes
-    'End Function
-
     Private Sub Speichern()
+        Try
 
-        Dim strPrefixes() As String
-        Dim Separator() As String = {"."}
+            If String.IsNullOrEmpty(Prefix) Then
+                MessageBox.Show("Bitte gebe ein gültiges Prefix ein.")
+                Return
+            End If
 
-        strPrefixes = Prefix.Split(Separator, StringSplitOptions.None)
-
-        Dim Prefixes As New List(Of Integer)
-
-        For Each Eintrag In strPrefixes
-            Prefixes.Add(CInt(Eintrag))
-        Next
-
-        'If KapitelListe.Length <= Prefixes(0) Then
-        '    ReDim Preserve KapitelListe(Prefixes(0))
-        'End If
-
-        'If Prefixes.Count = 2 Then
-        '    If KapitelListe(Prefixes(0)).UnterKapitel.Length <= Prefixes(1) Then
-        '        ReDim Preserve KapitelListe(Prefixes(0)).UnterKapitel(Prefixes(1))
-        '    End If
-        'End If
+            If String.IsNullOrEmpty(Ueberschrift) Then
+                MessageBox.Show("Bitte gebe eine Überschrift ein.")
+                Return
+            End If
 
 
-        'If Prefixes.Count = 1 Then
-        '    WerteSetzen(KapitelListe(Prefixes(0)))
-        'ElseIf Prefixes.Count = 2 Then
-        '    WerteSetzen(KapitelListe(Prefixes(0)).UnterKapitel(Prefixes(1)))
-        'End If
+            Dim strPrefixes() As String
+            Dim Separator() As String = {"."}
 
-        'For i = 0 To KapitelListe.Length - 1
-        '    If KapitelListe(i) Is Nothing Then
-        '        KapitelListe(i) = New Model.KapitelModel(CStr(i), "<nicht definiert>", "", "", "")
-        '    End If
-        'Next
+            strPrefixes = Prefix.Split(Separator, StringSplitOptions.None)
 
-        'Dim Kapitels As List(Of Model.KapitelModel) = MainModule.Root.ToList
+            Dim Prefixes As New List(Of Integer)
 
-        'If KapitelListe.Count <= Prefixes(0) Then
-        '    KapitelListe.Add(New Model.KapitelModel(CStr(Prefix), Ueberschrift, Inhalt, BildPfad, Icon))
-        '    If KapitelListe.Count > 0 Then
-        '        For i = 0 To Prefixes(0) - 1
+            For Each Eintrag In strPrefixes
+                Prefixes.Add(CInt(Eintrag))
+            Next
 
-        '            If KapitelListe(i) Is Nothing Then '
-        '                KapitelListe(i) = New Model.KapitelModel(Prefix, "<nicht definiert>", "", "", "")
-        '            End If
+            Select Case Prefixes.Count
+                Case 1
+                    ErzeugeEintraege(MainModule.Root, Prefixes)
+                    MainModule.HelpDisplay.AktuelleDetails = MainModule.Root(Prefixes(0) - 1)
+                Case 2
+                    ErzeugeEbene1(Prefixes)
+                    ErzeugeEintraege(MainModule.Root(Prefixes(0) - 1).UnterKapitel, Prefixes)
+                    MainModule.HelpDisplay.AktuelleDetails = MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1)
+                Case 3
+                    ErzeugeEbene1(Prefixes)
+                    ErzeugeEbene2(Prefixes)
+                    ErzeugeEintraege(MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel, Prefixes)
+                    MainModule.HelpDisplay.AktuelleDetails = MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1)
+                Case 4
+                    ErzeugeEbene1(Prefixes)
+                    ErzeugeEbene2(Prefixes)
+                    ErzeugeEbene3(Prefixes)
+                    ErzeugeEintraege(MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1).UnterKapitel, Prefixes)
+                    MainModule.HelpDisplay.AktuelleDetails = MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1).UnterKapitel(Prefixes(3) - 1)
+            End Select
 
-        '            'If KapitelListe.Count <= Prefixes(0) Then
-        '            '    If i = (Prefixes(0) - 1) Then
+            Prefix = ""
+            Icon = ""
+            Ueberschrift = ""
+            Inhalt = ""
+        Catch ex As Exception
+            MessageBox.Show("Es ist ein Fehler aufgetreten." & Environment.NewLine & "Fehlermeldung: " & ex.Message)
+        End Try
+    End Sub
 
+    Private Sub ErzeugeEbene1(argPrefixes As List(Of Integer))
+        Dim index As Integer = MainModule.Root.ToList.FindIndex(Function(x) x.Prefixes(0) = argPrefixes(0))
+        If index = -1 Then
+            Dim prfx As New List(Of Integer)
+            prfx.Add(argPrefixes(0))
+            AddeEintrag(MainModule.Root, prfx, True)
+        End If
+    End Sub
 
-        '            '    End If
-        '            'Else
+    Private Sub ErzeugeEbene2(argPrefixes As List(Of Integer))
+        Dim index As Integer = MainModule.Root(argPrefixes(0) - 1).UnterKapitel.ToList.FindIndex(Function(x) x.Prefixes(1) = argPrefixes(1))
+        If index = -1 Then
+            Dim prfx As New List(Of Integer)
+            prfx.Add(argPrefixes(0))
+            prfx.Add(argPrefixes(1))
+            AddeEintrag(MainModule.Root(argPrefixes(0) - 1).UnterKapitel, prfx, True)
+        End If
+    End Sub
 
-        '            'End If
-        '        Next
-        '    End If
-        'End If
-
-        'Dim Prefixes As List(Of Integer) = CreatePrefixList(Prefix)
-
-        Select Case Prefixes.Count
-            Case 1
-                ErzeugeEintraege(MainModule.Root, Prefixes)
-            Case 2
-                'ErzeugeEinträge(MainModule.Root, strPrefixes(0))
-
-                ErzeugeEintraege(MainModule.Root(Prefixes(0) - 1).UnterKapitel, Prefixes)
-            Case 3
-                ErzeugeEintraege(MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel, Prefixes)
-        End Select
-
-        MainModule.HelpDisplay.AktuelleDetails = Nothing
-
+    Private Sub ErzeugeEbene3(argPrefixes As List(Of Integer))
+        Dim index As Integer = MainModule.Root(argPrefixes(0) - 1).UnterKapitel(argPrefixes(1) - 1).UnterKapitel.ToList.FindIndex(Function(x) x.Prefixes(1) = argPrefixes(1))
+        If index = -1 Then
+            Dim prfx As New List(Of Integer)
+            prfx.Add(argPrefixes(0))
+            prfx.Add(argPrefixes(1))
+            prfx.Add(argPrefixes(2))
+            AddeEintrag(MainModule.Root(argPrefixes(0) - 1).UnterKapitel(argPrefixes(1) - 1).UnterKapitel, prfx, True)
+        End If
     End Sub
 
     Private Sub ErzeugeEintraege(ByRef Ebene As ObservableCollection(Of Model.KapitelModel), argPrefixes As List(Of Integer))
         Dim EintragErsetzt As Boolean = False
         If Ebene.Count = 0 Then
-            AddeEintrag(Ebene, argPrefixes)
-            ''Dim PrefixEinzeln As Integer
-            ''PrefixEinzeln = argPrefix.Count - 1
+            AddeEintrag(Ebene, argPrefixes, False)
 
         Else
             For i = 0 To Ebene.Count - 1
                 If Ebene(i).Prefix = Prefix Then
-                    Dim Ergebnis As MessageBoxResult = MessageBox.Show("Ein Eintrag mit diesem Prefix ist bereits vorhanden. Soll dieser überschrieben werden?", "", MessageBoxButton.YesNo)
+                    Dim Ergebnis As MessageBoxResult = MessageBox.Show("Ein Kapitel mit diesem Prefix ist bereits vorhanden." & Environment.NewLine & Environment.NewLine & "Wenn dieser überschrieben werden soll, klicke auf Ja." & Environment.NewLine & Environment.NewLine & "Wenn das neue Kapitel (" & Prefix & ") an dieser Stelle eingefügt werden soll, klicke auf Nein. Dabei werden alle Prefixes dieser Hierarchieebene um eins erhöht.", "", MessageBoxButton.YesNoCancel)
                     If Ergebnis = MessageBoxResult.Yes Then
                         Ebene(i) = New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon)
                         EintragErsetzt = True
                         Exit For
-                    Else
+                    ElseIf ergebnis = MessageBoxResult.No Then
+                        InsertKapitel_Execute(Nothing)
                         EintragErsetzt = True
+                        Exit For
+                    ElseIf Ergebnis = MessageBoxResult.Cancel Then
+                        Return
                     End If
                 End If
             Next
-            If Not EintragErsetzt Then AddeEintrag(Ebene, argPrefixes) 'Ebene.Add(New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
+
+
+            If Not EintragErsetzt Then AddeEintrag(Ebene, argPrefixes, False)
         End If
-
-        Ebene = New ObservableCollection(Of Model.KapitelModel)(Ebene.OrderBy(Function(x) x.Prefix))
     End Sub
+    Private Sub AddeEintrag(ByRef Ebene As ObservableCollection(Of Model.KapitelModel), argPrefixes As List(Of Integer), AufrufVonSpeichern As Boolean)
 
-    Private Sub AddeEintrag(ByRef Ebene As ObservableCollection(Of Model.KapitelModel), argPrefixes As List(Of Integer))
-        Select Case argPrefixes.Count
-            Case 1
-                For i = 1 To argPrefixes(0) - 1
-                    MainModule.Root.Add(New Model.KapitelModel(CStr(i), "<nicht festgelegt>", "", "", ""))
-                Next
-            Case 2
-                For i = 1 To argPrefixes(1) - 1
-                    MainModule.Root(argPrefixes(0) - 1).UnterKapitel.Add(New Model.KapitelModel(CStr(i), "<nicht festgelegt>", "", "", ""))
-                Next
-            Case 3
-                For i = 1 To argPrefixes(2) - 1
-                    MainModule.Root(argPrefixes(0)).UnterKapitel(argPrefixes(1)).UnterKapitel.Add(New Model.KapitelModel(CStr(i), "<nicht festgelegt>", "", "", ""))
-                Next
-        End Select
-        Ebene.Add(New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
+        Dim LaengeLetztesPrefix As Integer = CStr(argPrefixes(argPrefixes.Count - 1)).Length
+
+        Dim strPrefix As String = String.Join(".", argPrefixes)
+
+        Dim VorhandenePrefixes As New List(Of Integer)
+        For i = 0 To Ebene.Count - 1
+            VorhandenePrefixes.Add(i + 1)
+        Next
+        For j = 1 To argPrefixes(argPrefixes.Count - 1) - 1
+            If Not VorhandenePrefixes.Contains(j) Then
+                Ebene.Add(New Model.KapitelModel(strPrefix.Substring(0, strPrefix.Length - LaengeLetztesPrefix) & CStr(j), "<nicht festgelegt>", "", "", ""))
+            End If
+        Next
+
+
+        If AufrufVonSpeichern Then
+            Ebene.Add(New Model.KapitelModel(String.Join(".", argPrefixes), "<nicht festgelegt>", "", "", ""))
+        Else
+            Ebene.Add(New Model.KapitelModel(String.Join(".", argPrefixes), Ueberschrift, Inhalt, BildPfad, Icon))
+        End If
     End Sub
 
     Private Sub WerteSetzen(ByRef argObjekt As Model.KapitelModel)
@@ -238,5 +258,62 @@ Public Class JSONCreator
         If OFD.ShowDialog Then
             BildPfad = OFD.FileName
         End If
+    End Sub
+
+    Private _InsertKapitel As ICommand
+    Public ReadOnly Property InsertKapitel() As ICommand
+        Get
+            If _InsertKapitel Is Nothing Then _InsertKapitel = New RelayCommand(AddressOf InsertKapitel_Execute, Function(o) True)
+            Return _InsertKapitel
+        End Get
+    End Property
+    Private Sub InsertKapitel_Execute(obj As Object)
+
+        Dim Separator() As String = {"."}
+        Dim Prefixes() As String = Prefix.Split(Separator, StringSplitOptions.None)
+        Dim intPrefixes As New List(Of Integer)
+
+        For Each item In Prefixes
+            intPrefixes.Add(CInt(item))
+        Next
+
+        Select Case intPrefixes.Count
+            Case 1
+                If intPrefixes(0) - 1 > MainModule.Root.Count Then
+                    MessageBox.Show("Folgendes Kapitel kann nicht eingefügt werden, da es sich ausserhalb der bereits definierten Grenzen befindet:" & Environment.NewLine & Environment.NewLine & "Prefix: " & Prefix & Environment.NewLine & "Überschrift: " & Ueberschrift & Environment.NewLine & Environment.NewLine & "Um dieses Kapitel zuzufügen, klicke bitte auf Hinzufügen/Ändern.")
+                    Return
+                End If
+                MainModule.Root.Insert(intPrefixes(0) - 1, New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
+                For i = intPrefixes(0) - 1 To MainModule.Root.Count - 1
+                    MainModule.Root(i).Prefix = CStr(i + 1)
+                Next
+            Case 2
+                If intPrefixes(1) - 1 > MainModule.Root(intPrefixes(0) - 1).UnterKapitel.Count Then
+                    MessageBox.Show("Folgendes Kapitel kann nicht eingefügt werden, da es sich ausserhalb der bereits definierten Grenzen befindet:" & Environment.NewLine & Environment.NewLine & "Prefix: " & Prefix & Environment.NewLine & "Überschrift: " & Ueberschrift & Environment.NewLine & Environment.NewLine & "Um dieses Kapitel zuzufügen, klicke bitte auf Hinzufügen/Ändern.")
+                    Return
+                End If
+                MainModule.Root(intPrefixes(0) - 1).UnterKapitel.Insert(intPrefixes(1) - 1, New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
+                For i = intPrefixes(1) - 1 To MainModule.Root(intPrefixes(0) - 1).UnterKapitel.Count - 1
+                    MainModule.Root(intPrefixes(0) - 1).UnterKapitel(i).Prefix = MainModule.HelpDisplay.ErstelleNeuesPrefix(intPrefixes, i)
+                Next
+            Case 3
+                If intPrefixes(2) - 1 > MainModule.Root(intPrefixes(0) - 1).UnterKapitel(intPrefixes(1) - 1).UnterKapitel.Count Then
+                    MessageBox.Show("Folgendes Kapitel kann nicht eingefügt werden, da es sich ausserhalb der bereits definierten Grenzen befindet:" & Environment.NewLine & Environment.NewLine & "Prefix: " & Prefix & Environment.NewLine & "Überschrift: " & Ueberschrift & Environment.NewLine & Environment.NewLine & "Um dieses Kapitel zuzufügen, klicke bitte auf Hinzufügen/Ändern.")
+                    Return
+                End If
+                MainModule.Root(intPrefixes(0) - 1).UnterKapitel(intPrefixes(1) - 1).UnterKapitel.Insert(intPrefixes(2) - 1, New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
+                For i = intPrefixes(2) - 1 To MainModule.Root(intPrefixes(0) - 1).UnterKapitel(intPrefixes(1) - 1).UnterKapitel.Count - 1
+                    MainModule.Root(intPrefixes(0) - 1).UnterKapitel(intPrefixes(1) - 1).UnterKapitel(i).Prefix = MainModule.HelpDisplay.ErstelleNeuesPrefix(intPrefixes, i)
+                Next
+            Case 4
+                If intPrefixes(3) - 1 > MainModule.Root(intPrefixes(0) - 1).UnterKapitel(intPrefixes(1) - 1).UnterKapitel(intPrefixes(2) - 1).UnterKapitel.Count Then
+                    MessageBox.Show("Folgendes Kapitel kann nicht eingefügt werden, da es sich ausserhalb der bereits definierten Grenzen befindet:" & Environment.NewLine & Environment.NewLine & "Prefix: " & Prefix & Environment.NewLine & "Überschrift: " & Ueberschrift & Environment.NewLine & Environment.NewLine & "Um dieses Kapitel zuzufügen, klicke bitte auf Hinzufügen/Ändern.")
+                    Return
+                End If
+                MainModule.Root(intPrefixes(0) - 1).UnterKapitel(intPrefixes(1) - 1).UnterKapitel(intPrefixes(2) - 1).UnterKapitel(intPrefixes(3) - 1).UnterKapitel.Insert(intPrefixes(3) - 1, New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon))
+                For i = intPrefixes(3) - 1 To MainModule.Root(intPrefixes(0) - 1).UnterKapitel(intPrefixes(1) - 1).UnterKapitel(intPrefixes(2) - 1).UnterKapitel.Count - 1
+                    MainModule.Root(intPrefixes(0) - 1).UnterKapitel(intPrefixes(1) - 1).UnterKapitel(intPrefixes(2) - 1).UnterKapitel(i).Prefix = MainModule.HelpDisplay.ErstelleNeuesPrefix(intPrefixes, i)
+                Next
+        End Select
     End Sub
 End Class

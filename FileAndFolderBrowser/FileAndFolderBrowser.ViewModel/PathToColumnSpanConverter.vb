@@ -4,20 +4,20 @@ Imports System.Windows
 Imports System.Windows.Data
 
 Namespace Converter
-    Public Class StringToVisibilityConverter
+    Public Class PathToColumnSpanConverter
         Implements IValueConverter
 
         Public Function Convert(value As Object, targetType As Type, parameter As Object, culture As CultureInfo) As Object Implements IValueConverter.Convert
-            Dim Wert As String = DirectCast(value, String)
+            Dim Pfad As String = DirectCast(value, String)
 
-            If String.IsNullOrEmpty(Wert) Then
-                Return Visibility.Collapsed
+            If String.IsNullOrEmpty(Pfad) Then
+                Return 2
             Else
-                'If System.IO.File.Exists(Wert) Then
-                Return Visibility.Visible
-                'Else
-                '    Return Visibility.Collapsed
-                'End If
+                If System.IO.File.Exists(Pfad) Then
+                    Return 1
+                Else
+                    Return 2
+                End If
             End If
         End Function
 

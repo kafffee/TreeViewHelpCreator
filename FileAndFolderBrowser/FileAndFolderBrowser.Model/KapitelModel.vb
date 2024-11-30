@@ -2,11 +2,32 @@
 Imports System.Collections.ObjectModel
 Imports System.ComponentModel
 Imports System.Runtime.CompilerServices
+Imports Newtonsoft.Json
 
 Public Class KapitelModel
     Implements INotifyPropertyChanged
+
+    Private _Prefix As String
     Public Property Prefix As String
+        Get
+            Return _Prefix
+        End Get
+        Set(value As String)
+            _Prefix = value
+            RaisePropertyChanged()
+        End Set
+    End Property
+    Private _Ueberschrift As String
     Public Property Ueberschrift As String
+        Get
+            Return _Ueberschrift
+        End Get
+        Set(value As String)
+            _Ueberschrift = value
+            RaisePropertyChanged()
+        End Set
+    End Property
+
     Private _Inhalt As String
     Public Property Inhalt As String
         Get
@@ -17,15 +38,12 @@ Public Class KapitelModel
             RaisePropertyChanged()
         End Set
     End Property
-    Private _BildPfad As String
-    Public Property BildPfad As String
+
+    <JsonIgnore>
+    Public ReadOnly Property BildPfad As String
         Get
-            Return _BildPfad
+            Return System.IO.Directory.GetCurrentDirectory & "\help\img\" & Prefix & ".png"
         End Get
-        Set(value As String)
-            _BildPfad = value
-            RaisePropertyChanged()
-        End Set
     End Property
 
     Private _Icon As String
@@ -50,6 +68,7 @@ Public Class KapitelModel
         End Set
     End Property
 
+    <JsonIgnore>
     Public ReadOnly Property Prefixes As List(Of Integer)
         Get
             Dim strPrefixes() As String
@@ -71,7 +90,7 @@ Public Class KapitelModel
         Prefix = argPrefix
         Ueberschrift = argUeberschrift
         Inhalt = argInhalt
-        BildPfad = argBildPfad
+        'BildPfad = argBildPfad
         Icon = argIcon
     End Sub
 

@@ -5,14 +5,18 @@ Imports FileAndFolderBrowser.ViewModel.Instrastructure
 Imports System.Windows.Input
 Imports Microsoft.Win32
 Imports Newtonsoft.Json
+Imports System.Windows
+Imports System.Security.Cryptography
 
 Public Class HelpDisplayVM
     Inherits Instrastructure.ViewModelBase
 
     Public Property MainModule As Services.IZentraleKlasse = Services.ServiceContainer.GetService(Of Services.IZentraleKlasse)
-
+    Public Property IsIncreatorMode As Boolean = True
     Public Sub New()
-
+        If Not IsIncreatorMode Then
+            MainModule.Root = JsonConvert.DeserializeObject(Of ObservableCollection(Of Model.KapitelModel))(System.IO.File.ReadAllText(System.IO.Directory.GetCurrentDirectory & "\help\help.dtb"))
+        End If
     End Sub
 
     Private _AktuelleDetails As Model.KapitelModel
@@ -80,12 +84,16 @@ Public Class HelpDisplayVM
         End Get
     End Property
     Public Sub Bearbeiten_Execute(obj As Object)
-        Dim Objekt As Model.KapitelModel = DirectCast(obj, Model.KapitelModel)
-        MainModule.JSONCreator.Icon = Objekt.Icon
-        MainModule.JSONCreator.Prefix = Objekt.Prefix
-        MainModule.JSONCreator.Ueberschrift = Objekt.Ueberschrift
-        MainModule.JSONCreator.Inhalt = Objekt.Inhalt
-        MainModule.JSONCreator.BildPfad = Objekt.BildPfad
+        Try
+            Dim Objekt As Model.KapitelModel = DirectCast(obj, Model.KapitelModel)
+            MainModule.JSONCreator.Icon = Objekt.Icon
+            MainModule.JSONCreator.Prefix = Objekt.Prefix
+            MainModule.JSONCreator.Ueberschrift = Objekt.Ueberschrift
+            MainModule.JSONCreator.Inhalt = Objekt.Inhalt
+            MainModule.JSONCreator.BildPfad = Objekt.BildPfad
+        Catch ex As Exception
+            MessageBox.Show("Es ist ein Fehler aufgetreten." & Environment.NewLine & "Fehlermeldung: " & ex.Message)
+        End Try
     End Sub
 
     Private _Loeschen As ICommand
@@ -96,28 +104,59 @@ Public Class HelpDisplayVM
         End Get
     End Property
     Private Sub Loeschen_Execute(obj As Object)
-        Dim Objekt As Model.KapitelModel = DirectCast(obj, Model.KapitelModel)
+        Try
 
-        Dim Prefix As String = Objekt.Prefix
+            Dim Objekt As Model.KapitelModel = DirectCast(obj, Model.KapitelModel)
 
-        Dim strPrefixes() As String
-        Dim Separator() As String = {"."}
+            Dim Ergebnis As MessageBoxResult = MessageBox.Show("Möchtest du folgenes Kapitel wirklich unwiderruflich löschen?" & Environment.NewLine & Environment.NewLine & "Prefix: " & Objekt.Prefix & Environment.NewLine & "Überschrift: " & Objekt.Ueberschrift, "", MessageBoxButton.YesNo)
+            If Ergebnis = MessageBoxResult.No Then
+                Return
+            End If
 
-        strPrefixes = Prefix.Split(Separator, StringSplitOptions.None)
+            Dim Prefix As String = Objekt.Prefix
 
-        Dim Prefixes As New List(Of Integer)
+            Dim strPrefixes() As String
+            Dim Separator() As String = {"."}
 
-        For Each Eintrag In strPrefixes
-            Prefixes.Add(CInt(Eintrag))
-        Next
+            strPrefixes = Prefix.Split(Separator, StringSplitOptions.None)
 
-        Select Case Prefixes.Count
-            Case 1
-                MainModule.Root(Prefixes(1) - 1) = Nothing
-            Case 2
-                MainModule.Root(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1) = Nothing
-            Case 3
-                MainModule.Root(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1).UnterKapitel(Prefixes(3) - 1) = Nothing
-        End Select
+            Dim Prefixes As New List(Of Integer)
+
+            For Each Eintrag In strPrefixes
+                Prefixes.Add(CInt(Eintrag))
+            Next
+
+            Select Case Prefixes.Count
+                Case 1
+                    MainModule.Root.RemoveAt(Prefixes(0) - 1)
+                    For i = Prefixes(0) - 1 To MainModule.Root.Count - 1
+                        MainModule.Root(i).Prefix = CStr(i + 1)
+                    Next
+                Case 2
+                    MainModule.Root(Prefixes(0) - 1).UnterKapitel.RemoveAt(Prefixes(1) - 1)
+                    For i = Prefixes(1) - 1 To MainModule.Root(Prefixes(0) - 1).UnterKapitel.Count - 1
+                        MainModule.Root(Prefixes(0) - 1).UnterKapitel(i).Prefix = ErstelleNeuesPrefix(Prefixes, i)
+                    Next
+                Case 3
+                    MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel.RemoveAt(Prefixes(2) - 1)
+                    For i = Prefixes(2) - 1 To MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel.Count - 1
+                        MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel(i).Prefix = ErstelleNeuesPrefix(Prefixes, i)
+                    Next
+                Case 4
+                    MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1).UnterKapitel.RemoveAt(Prefixes(3) - 1)
+                    For i = Prefixes(3) - 1 To MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1).UnterKapitel.Count - 1
+                        MainModule.Root(Prefixes(0) - 1).UnterKapitel(Prefixes(1) - 1).UnterKapitel(Prefixes(2) - 1).UnterKapitel(i).Prefix = ErstelleNeuesPrefix(Prefixes, i)
+                    Next
+            End Select
+        Catch ex As Exception
+            MessageBox.Show("Es ist ein Fehler aufgetreten." & Environment.NewLine & "Fehlermeldung: " & ex.Message)
+        End Try
+
     End Sub
+
+    Public Function ErstelleNeuesPrefix(argPrefixes As List(Of Integer), argi As Integer) As String
+        argPrefixes(argPrefixes.Count - 1) = argi + 1
+        Return String.Join(".", argPrefixes)
+    End Function
+
 End Class

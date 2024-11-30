@@ -10,7 +10,7 @@
     <Window.DataContext>
         <viewmodel:MainViewModel/>
     </Window.DataContext>
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -19,5 +19,5 @@
             <View:JSONCreatorView Grid.Row="0" DataContext="{Binding JSONCreator}"/>
             <View:HelpDisplayView Grid.Row="1" DataContext="{Binding HelpDisplay}"/>
         </Grid>
-    </ScrollViewer>
+   
 </Window>
