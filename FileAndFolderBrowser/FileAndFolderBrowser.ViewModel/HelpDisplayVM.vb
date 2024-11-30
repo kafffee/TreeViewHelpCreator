@@ -7,6 +7,7 @@ Imports Microsoft.Win32
 Imports Newtonsoft.Json
 Imports System.Windows
 Imports System.Security.Cryptography
+Imports System.IO
 
 Public Class HelpDisplayVM
     Inherits Instrastructure.ViewModelBase
@@ -15,7 +16,10 @@ Public Class HelpDisplayVM
     Public Property IsIncreatorMode As Boolean = True
     Public Sub New()
         If Not IsIncreatorMode Then
-            MainModule.Root = JsonConvert.DeserializeObject(Of ObservableCollection(Of Model.KapitelModel))(System.IO.File.ReadAllText(System.IO.Directory.GetCurrentDirectory & "\help\help.dtb"))
+            Dim Pfad As String = System.IO.Directory.GetCurrentDirectory & "\help\help.dtb"
+            If File.Exists(Pfad) Then
+                MainModule.Root = JsonConvert.DeserializeObject(Of ObservableCollection(Of Model.KapitelModel))(System.IO.File.ReadAllText(Pfad))
+            End If
         End If
     End Sub
 
@@ -51,7 +55,10 @@ Public Class HelpDisplayVM
     End Property
     Private Sub Laden_Execute(obj As Object)
         Dim OFD As New OpenFileDialog
-        OFD.InitialDirectory = System.IO.Directory.GetCurrentDirectory
+        Dim PathToConfig As String = System.IO.Directory.GetCurrentDirectory & "\help\jsondirectory.config"
+        If File.Exists(PathToConfig) Then
+            OFD.InitialDirectory = File.ReadAllText(System.IO.Directory.GetCurrentDirectory & "\help\jsondirectory.config")
+        End If
         If OFD.ShowDialog Then
             MainModule.Root = JsonConvert.DeserializeObject(Of ObservableCollection(Of Model.KapitelModel))(System.IO.File.ReadAllText(OFD.FileName))
         End If
@@ -67,12 +74,30 @@ Public Class HelpDisplayVM
     Public Sub Speichern_Execute(obj As Object)
         Dim ZuSpeicherndeDTB As String = JsonConvert.SerializeObject(MainModule.Root)
         Dim SFD As New SaveFileDialog
+
+        Dim PathToConfig As String = System.IO.Directory.GetCurrentDirectory & "\help\jsondirectory.config"
+        If File.Exists(PathToConfig) Then
+            SFD.InitialDirectory = File.ReadAllText(System.IO.Directory.GetCurrentDirectory & "\help\jsondirectory.config")
+        End If
+
         If SFD.ShowDialog Then
             If Not System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(SFD.FileName)) Then
                 System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(SFD.FileName))
             End If
+
             System.IO.File.WriteAllText(SFD.FileName, ZuSpeicherndeDTB)
+
+            If Not Directory.Exists(Path.GetDirectoryName(PathToConfig)) Then Directory.CreateDirectory(Path.GetDirectoryName(PathToConfig))
+            If File.Exists(PathToConfig) Then
+                If Not System.IO.File.ReadAllText(PathToConfig) = Path.GetDirectoryName(SFD.FileName) Then
+                    File.WriteAllText(PathToConfig, Path.GetDirectoryName(SFD.FileName))
+                End If
+            Else
+                File.WriteAllText(PathToConfig, Path.GetDirectoryName(SFD.FileName))
+            End If
+
         End If
+
         MainModule.ChangesWereMade = False
     End Sub
 
