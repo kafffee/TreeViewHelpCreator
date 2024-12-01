@@ -188,10 +188,12 @@ Public Class JSONCreator
                 If Ebene(i).Prefix = Prefix Then
                     Dim Ergebnis As MessageBoxResult = MessageBox.Show("Ein Kapitel mit diesem Prefix ist bereits vorhanden." & Environment.NewLine & Environment.NewLine & "Wenn dieser überschrieben werden soll, klicke auf Ja." & Environment.NewLine & Environment.NewLine & "Wenn das neue Kapitel (" & Prefix & ") an dieser Stelle eingefügt werden soll, klicke auf Nein. Dabei werden alle Prefixes dieser Hierarchieebene um eins erhöht.", "", MessageBoxButton.YesNoCancel)
                     If Ergebnis = MessageBoxResult.Yes Then
+                        Dim KapitelSicherung As ObservableCollection(Of Model.KapitelModel) = Ebene(i).UnterKapitel
                         Ebene(i) = New Model.KapitelModel(Prefix, Ueberschrift, Inhalt, BildPfad, Icon)
+                        Ebene(i).UnterKapitel = KapitelSicherung
                         EintragErsetzt = True
                         Exit For
-                    ElseIf ergebnis = MessageBoxResult.No Then
+                    ElseIf Ergebnis = MessageBoxResult.No Then
                         InsertKapitel_Execute(Nothing)
                         EintragErsetzt = True
                         Exit For
